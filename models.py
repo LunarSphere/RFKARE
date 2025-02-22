@@ -4,10 +4,11 @@ from diffusers import DiffusionPipeline
 from transformers import pipeline
 from PIL import Image
 
-def generateText(role, prompt):
-    messages = [{"role": role, "content": prompt}]
+def generateText(prompt):
     deepseek = pipeline("text-generation", model="deepseek-ai/deepseek-llm-7b-base")
-    return deepseek(messages)
+    response = deepseek(prompt)[0]
+    print(response)
+    return response
 
 def generateImage(prompt):
     diffusion = DiffusionPipeline.from_pretrained("OFA-Sys/small-stable-diffusion-v0", torch_dtype=torch.float16)
@@ -18,9 +19,10 @@ def overlayImage(base, overlay, pos):
     return base.paste(overlay, base, pos)
 
 def main():
-    #img = generateImage("A football stadium")
-    text = generateText("User", "Hello, this is a test message.")
+    text = generateText("Hello, this is a test message.")
     print(text)
+    
+    #img = generateImage("A football stadium")
     #img.save("C:/Users/wyatt/OneDrive/Desktop/hacklytics/test.jpg")
 
 if __name__ == "__main__":
