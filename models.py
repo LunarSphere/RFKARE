@@ -5,8 +5,8 @@ from transformers import pipeline
 from PIL import Image
 
 def generateText(prompt):
-    deepseek = pipeline("text-generation", model="deepseek-ai/deepseek-llm-7b-base")
-    response = deepseek(prompt)[0]
+    llama = pipeline("text-generation", model="unsloth/Llama-3.2-1B")
+    response = llama(prompt)[0]
     print(response)
     return response
 

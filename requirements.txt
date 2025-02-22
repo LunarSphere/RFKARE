@@ -4,3 +4,6 @@ pillow
 torch
 huggingface-hub
 accelerate
+requests
+geopy
+ee
