@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from gekko import GEKKO
 
-data = pd.read_csv("C:/Users/tobys/OneDrive/Clemson-Classes/Hacklytics2025/ijmatrix.csv")
+data = pd.read_csv("ijmatrix.csv")
 
 n_rows = data['i'].max() * 2 + 1
 n_cols = data['j'].max() * 2 + 1
