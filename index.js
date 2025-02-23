@@ -1,4 +1,27 @@
 
+function createMapGrid() {
+    const mapGrid = document.getElementById('mapGrid');
+    mapGrid.innerHTML = ''; // Clear existing grid
+
+    // Create 10x13 grid
+    for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 13; col++) {
+            const tile = document.createElement('div');
+            tile.className = 'map-tile';
+            
+            // Set background image
+            tile.style.backgroundImage = `url('data/gee_image_row${row}_col${col}.png')`;
+            
+            // Highlight the specified tile (3rd row, 4th column)
+            if (row === 2 && col === 3) {
+                tile.classList.add('highlighted');
+            }
+            
+            mapGrid.appendChild(tile);
+        }
+    }
+}
+
 function handleAnalyze() {
     const button = document.getElementById('analyzeBtn');
     const spinner = document.querySelector('.spinner');
@@ -25,6 +48,9 @@ function handleAnalyze() {
         ];
         
         factorsList.innerHTML = factors.map(factor => `<li>${factor}</li>`).join('');
+
+        // Create map grid
+        createMapGrid();
 
         // Show results
         results.style.display = 'block';

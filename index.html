@@ -207,10 +207,78 @@
                 justify-content: center;
             }
         }
+
+        .map-container {
+            margin-top: 2rem;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(13, 1fr);
+            gap: 1px;
+            background: #1e293b;
+            padding: 1px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .map-tile {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%; /* Square aspect ratio */
+            background-size: cover;
+            background-position: center;
+            transition: all 0.3s ease;
+        }
+
+        .map-tile.highlighted {
+            box-shadow: 0 0 0 2px #60a5fa, 0 0 20px rgba(96, 165, 250, 0.5);
+            z-index: 1;
+            transform: scale(1.05);
+        }
+
+        .map-legend {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-color.highlighted {
+            background: #60a5fa;
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        .legend-color.regular {
+            background: #1e293b;
+            border: 1px solid #334155;
+        }
     </style>
+    <script src="index.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
+
 <body>
+    <!-- Previous HTML remains the same until results section -->
     <div class="container">
         <!-- Hero Section -->
         <div class="hero">
@@ -255,14 +323,29 @@
                             <i class="fas fa-database"></i>
                             Key Factors
                         </h3>
-                        <ul class="factors-list" id="factorsList">
-                        </ul>
+                        <ul class="factors-list" id="factorsList"></ul>
+                    </div>
+                </div>
+
+                <!-- New Map Section -->
+                <div class="map-container">
+                    <h3>Location Analysis Map</h3>
+                    <div class="map-grid" id="mapGrid"></div>
+                    <div class="map-legend">
+                        <div class="legend-item">
+                            <div class="legend-color highlighted"></div>
+                            <span>Recommended Location</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color regular"></div>
+                            <span>Analyzed Area</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Features Section -->
+        <!-- Features Section remains the same -->
         <div class="features">
             <div class="feature-card">
                 <i class="fas fa-brain"></i>
@@ -281,7 +364,5 @@
             </div>
         </div>
     </div>
-
-    <script src="index.js"></script>
 </body>
 </html>

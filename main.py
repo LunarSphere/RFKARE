@@ -8,7 +8,7 @@ import SatalliteClassifier
 
 prices = pd.read_csv('prices.csv')
 
-coor = (36.01029,-96.1725)
+coor = (36.096110, -96.063997)
 cen_coor = (36.153977, -95.992714)
 
 def vadd(a, b):
@@ -16,14 +16,14 @@ def vadd(a, b):
 
 miles_range = 10
 
-num_rows = 25
-num_cols = 31
+num_rows = 10
+num_cols = 13
 
 ijmatrix = {}
 
 last_zipcode = None
 
-#25 rows, 31 cols
+#10 rows, 13 cols
 
 # city_lat, city_lon = get_photos.get_city_coordinates("Tulsa, Oklahoma")
 # get_photos.capture_gee_images(city_lat, city_lon, date1='2018-01-01', date2='2025-02-22', deltalr=0.0058, deltaud=0.0058, miles_range=10)
@@ -43,7 +43,7 @@ for row in range(0, num_rows):
     for col in range(0, num_cols):
         isCircle = True
 
-        if math.sqrt((col - center[0])**2 + (row - center[1])**2) > center[1]:
+        if math.sqrt((col - center[0])**2 + (row - center[1])**2) > (center[0]+center[1])/2:
             isCircle = False
 
         qpos = (
@@ -102,4 +102,5 @@ df = pd.DataFrame(ijmatrix)
 df = df.T
 df.to_csv('ijmatrix.csv')
 # print prices as csv
-# print prices as csv
+# show ij matrix as heatmap
+# show prices as heatmap
