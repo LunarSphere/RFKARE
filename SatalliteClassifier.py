@@ -69,6 +69,7 @@ def process_all_images(data_folder):
     """
     # List to store results
     results = []
+    bcs = {}
     
     # Regex pattern to extract row and col from filename
     pattern = r'gee_image_row(\d+)_col(\d+)\.png'
@@ -87,7 +88,6 @@ def process_all_images(data_folder):
                 
                 # Process image
                 building_count, _ = process_image(image_path)
-                valid = np.sqrt((row - (num_rows/2))**2  + (col - (num_cols/2))**2) <= miles_range
                 
                 # Store result
                 results.append({
@@ -95,8 +95,8 @@ def process_all_images(data_folder):
                     'row': row,
                     'col': col,
                     'building_count': building_count,
-                    'valid': valid
                 })
+                bcs[(row, col)] = building_count
             else:
                 print(f"Skipping {filename}: does not match expected naming pattern")
     
@@ -109,4 +109,4 @@ def process_all_images(data_folder):
     # Display the DataFrame in Jupyter
     display(df)
     
-    return df
+    return bcs
