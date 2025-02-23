@@ -17,6 +17,8 @@ Use the following prompt to generate an effective summary:
     is a good location to build a stadium. Include detailed financial projections based on 
     the number of seats and invested cost. Make sure to include a team name inspired by the city. 
     Respond with the report itself rather than a chatbot response."
+
+Model: https://huggingface.co/ibm-granite/granite-vision-3.1-2b-preview
 """
 def generateSummary(imageUrl, prompt):
     formattedPrompt = [
@@ -27,16 +29,15 @@ def generateSummary(imageUrl, prompt):
     summarizer = pipeline("image-text-to-text", model="ibm-granite/granite-vision-3.1-2b-preview")
     return summarizer(formattedPrompt)
 
-# Likely no longer going to be used
+# Will be replaced with OpenAI
 def generateText(prompt):
     llama = pipeline("text-generation", model="unsloth/Llama-3.2-1B")
     response = llama(prompt)[0]
-    print(response)
     return response
 
-# Likely no longer going to be used
+# Will be replaced with OpenAI
 def generateImage(prompt):
-    diffusion = DiffusionPipeline.from_pretrained("OFA-Sys/small-stable-diffusion-v0", torch_dtype=torch.float16)
+    diffusion = DiffusionPipeline.from_pretrained("lambdalabs/miniSD-diffusers")
     images = diffusion(prompt)
     return images.images[0]
 
@@ -44,7 +45,10 @@ def overlayImage(base, overlay, pos):
     return base.paste(overlay, base, pos)
 
 def main():
-    print("This is the main function, it serves no purpose.")
+    print("This is a main function for testing purposes")
+    image = generateImage("A football team known as the Tusla Tornadoes winning the Super Bowl")
+    image.save("tuslaSuperBowl.jpg")
+    print("Main complete")
 
 if __name__ == "__main__":
     main()
