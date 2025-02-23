@@ -13,7 +13,7 @@ function createMapGrid() {
             tile.style.backgroundImage = `url('data/gee_image_row${row}_col${col}.png')`;
             
             // Highlight the specified tile (3rd row, 4th column)
-            if (row === 2 && col === 3) {
+            if (row === 4 && col === 4) {
                 tile.classList.add('highlighted');
             }
             
