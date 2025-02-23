@@ -1,12 +1,23 @@
 import numpy as np
+import pandas as pd
 from gekko import GEKKO
+
+data = pd.read_csv("ijmatrix.csv")
+
+iMax = max(data["i"])
+jMax = max(data["j"])
+
+a = []
+for i in range(iMax):
+    a.append([])
+    for j in range(jMax):
+        a[i][j] = data.iloc((i * jMax) + j)["isValid"]
 
 #dimensions of stadium locations array
 #SAMPLE -- this should be 2* the #of rows in the image array and 2* the #of cols in the image array
 #read these values in, store here
-n_rows = 3
-n_cols = 4
-
+n_rows = max(data["i"]) * 2
+n_cols = max(data["j"]) * 2
 
 #penalizes expensive land
 #SAMPLE -- adjust functions as you like
@@ -51,11 +62,11 @@ s = m.Var(lb=50000, ub=82500, integer=True)
 
 #function weights
 M = 50000000
-num_terms = 6
-weights = [1,1,M,M,M, -0.005]
+num_terms = 5
+weights = [1,M,M,M, -0.005]
 
 #functions
-funcs = [land_value, topography, CONST_one_stadium, CONST_no_water, CONST_in_radius, stadium_size]
+funcs = [land_value, CONST_one_stadium, CONST_no_water, CONST_in_radius, stadium_size]
 
 #coefficient matrices for functions
 #make sure coeffs[-1] == coeffs[0]

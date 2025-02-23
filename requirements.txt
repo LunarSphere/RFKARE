@@ -6,4 +6,6 @@ huggingface-hub
 accelerate
 requests
 geopy
-ee
+earthengine-api
+gekko
+pandas
