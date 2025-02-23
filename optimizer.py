@@ -4,20 +4,49 @@ from gekko import GEKKO
 
 data = pd.read_csv("ijmatrix.csv")
 
-iMax = max(data["i"])
-jMax = max(data["j"])
-
-a = []
-for i in range(iMax):
-    a.append([])
-    for j in range(jMax):
-        a[i][j] = data.iloc((i * jMax) + j)["isValid"]
-
 #dimensions of stadium locations array
 #SAMPLE -- this should be 2* the #of rows in the image array and 2* the #of cols in the image array
 #read these values in, store here
 n_rows = max(data["i"]) * 2
 n_cols = max(data["j"]) * 2
+
+a = []
+for i in range(n_rows):
+    a.append([])
+    for j in range(n_cols):
+        a[i][j] = data.iloc((i * (n_cols + 1)) + j)["isValid"]
+
+#4x bigger
+new_df = pd.MultiIndex.from_product([n_rows, n_cols], names=['i', 'j']).to_frame(index=False)
+
+#map from new to old (parent)
+new_df['orig_i'] = new_df['i'] // 2
+new_df['orig_j'] = new_df['j'] // 2
+
+#rename to be normal
+df_renamed = data.rename(columns={'i': 'orig_i', 'j': 'orig_j'})
+
+#inherit validity and value from parents
+new_df = new_df.merge(df_renamed, on=['orig_i', 'orig_j'], how='left')
+new_df['inCircle'] = new_df['inCircle'].fillna(0).astype(int)
+
+#keep format of columns
+new_df = new_df.drop(columns=['orig_i', 'orig_j'])
+new_df = new_df[['price', 'inCircle', 'i', 'j']]
+
+#average
+new_df['priceAvg'] = 0
+for i in range(n_rows):
+    for j in range(n_cols):
+        counter = 0
+        for di, dj in [(0, -1), (0, 1), (-1, 0), (1, 0), (0, 0)]:
+            if ((i+di) >= 0 and (i+di) <= n_rows and (j+dj) >= 0 and (j+dj) <= n_cols):
+                new_df.iloc((i(n_cols + 1))j)['priceAvg'] += new_df.iloc(((i+di)(n_cols + 1))(j+dj))['priceAvg']
+                counter += 1
+        new_df.iloc((i(n_cols + 1))j)['priceAvg'] /= 5
+#rename again
+new_df.drop(columns=['price'])
+new_df = new_df.rename(columns = {'priceAvg' : 'price'})
 
 #penalizes expensive land
 #SAMPLE -- adjust functions as you like
