@@ -6,6 +6,10 @@ import requests
 from io import BytesIO
 import math
 import os
+import numpy as np
+import cv2
+
+# ee.Authenticate()
 # ee.Initialize(project='gthack25')
 # print(ee.String('Hello from the Earth Engine servers!').getInfo())
 
@@ -89,36 +93,43 @@ def capture_gee_images(city_lat, city_lon, date1='2018-01-01', date2='2025-02-22
     
     for row in range(num_rows):
         for col in range(num_cols):
-            # Compute the center coordinate for the current grid cell.
-            cell_center_lat = start_lat + (row * 2 * deltaud) + deltaud
-            cell_center_lon = start_lon + (col * 2 * deltalr) + deltalr
-            
-            # Define the region for the image as a bounding box around the cell center.
-            region = ee.Geometry.BBox(cell_center_lon - deltalr, cell_center_lat - deltaud,
-                                      cell_center_lon + deltalr, cell_center_lat + deltaud)
-            
-            # Retrieve the image collection for the cell area using the provided dataset function.
-            dataset = retrieve_naip_image(cell_center_lat, cell_center_lon, date2, deltalr, deltaud, date1)
-            # Choose the first available image from the collection.
-            image = dataset.first()
-            
-            # Select only the first three bands (typically representing RGB) to avoid encoding issues.
-            image = image.select([0, 1, 2])
-            
-            # Set thumbnail parameters for a 1024x1024 image in PNG format.
-            thumb_params = {
-                'region': region, 
-                'dimensions': '1024x1024', 
-                'format': 'png'
-            }
-            try:
-                image_url = image.getThumbURL(thumb_params)
-            except Exception as e:
-                print(f"Error generating thumbnail URL for cell at row {row}, col {col}: {e}")
-                continue
-            
-            # Generate a filename based on grid row and column.
-            filename = os.path.join(data_dir, f"gee_image_row{row}_col{col}.png")
-            
-            #print(f"Fetching image at lat: {cell_center_lat:.6f}, lon: {cell_center_lon:.6f}")
-            save_image_from_url(image_url, filename)
+            if (np.sqrt((row - (num_rows/2))**2  + (col - (num_cols/2))**2) <= miles_range ):
+                # Compute the center coordinate for the current grid cell.
+                cell_center_lat = start_lat + (row * 2 * deltaud) + deltaud
+                cell_center_lon = start_lon + (col * 2 * deltalr) + deltalr
+                
+                # Define the region for the image as a bounding box around the cell center.
+                region = ee.Geometry.BBox(cell_center_lon - deltalr, cell_center_lat - deltaud,
+                                          cell_center_lon + deltalr, cell_center_lat + deltaud)
+                
+                # Retrieve the image collection for the cell area using the provided dataset function.
+                dataset = retrieve_naip_image(cell_center_lat, cell_center_lon, date2, deltalr, deltaud, date1)
+                # Choose the first available image from the collection.
+                image = dataset.first()
+                
+                # Select only the first three bands (typically representing RGB) to avoid encoding issues.
+                image = image.select([0, 1, 2])
+                
+                # Set thumbnail parameters for a 1024x1024 image in PNG format.
+                thumb_params = {
+                    'region': region, 
+                    'dimensions': '1024x1024', 
+                    'format': 'png'
+                }
+                try:
+                    image_url = image.getThumbURL(thumb_params)
+                except Exception as e:
+                    print(f"Error generating thumbnail URL for cell at row {row}, col {col}: {e}")
+                    continue 
+                    
+                
+                # Generate a filename based on grid row and column.
+                filename = os.path.join(data_dir, f"gee_image_row{row}_col{col}.png")
+                
+                #print(f"Fetching image at lat: {cell_center_lat:.6f}, lon: {cell_center_lon:.6f}")
+                save_image_from_url(image_url, filename)
+            else:
+                filename = os.path.join(data_dir, f"gee_image_row{row}_col{col}.png")
+                image = np.zeros((1024, 1024), dtype=np.uint8)
+                cv2.imwrite(filename, image)
+                

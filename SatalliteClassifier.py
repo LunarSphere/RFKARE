@@ -87,13 +87,15 @@ def process_all_images(data_folder):
                 
                 # Process image
                 building_count, _ = process_image(image_path)
+                valid = np.sqrt((row - (num_rows/2))**2  + (col - (num_cols/2))**2) <= miles_range
                 
                 # Store result
                 results.append({
                     'image_name': filename,
                     'row': row,
                     'col': col,
-                    'building_count': building_count
+                    'building_count': building_count,
+                    'valid': valid
                 })
             else:
                 print(f"Skipping {filename}: does not match expected naming pattern")
