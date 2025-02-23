@@ -14,12 +14,6 @@ n_cols = 4
 def land_value(A, X, _):
     return sum(A[i][j] * X[i][j] for i in range(n_rows) for j in range(n_cols))
 
-#penalizes forest cover
-#SAMPLE - adjust functions as you like
-#A matric is proportion of forest cover of area
-def forest_cover(A, X, _):
-    return sum(A[i][j] * X[i][j] for i in range(n_rows) for j in range(n_cols))
-
 #penalizes drastic height changes
 #SAMPLE - adjust functions as you like
 #A matrix is "steepness" metric of area
