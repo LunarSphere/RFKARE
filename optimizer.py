@@ -4,140 +4,88 @@ from gekko import GEKKO
 
 data = pd.read_csv("ijmatrix.csv")
 
-#dimensions of stadium locations array
-#SAMPLE -- this should be 2* the #of rows in the image array and 2* the #of cols in the image array
-#read these values in, store here
-n_rows = max(data["i"]) * 2
-n_cols = max(data["j"]) * 2
+n_rows = data['i'].max() * 2 + 1
+n_cols = data['j'].max() * 2 + 1
 
-a = []
-for i in range(n_rows):
-    a.append([])
-    for j in range(n_cols):
-        a[i][j] = data.iloc((i * (n_cols + 1)) + j)["isValid"]
+new_i = np.arange(0, 2*n_rows + 1)
+new_j = np.arange(0, 2*n_cols + 1)
 
-#4x bigger
-new_df = pd.MultiIndex.from_product([n_rows, n_cols], names=['i', 'j']).to_frame(index=False)
-
-#map from new to old (parent)
+new_df = pd.MultiIndex.from_product([new_i, new_j], names=['i', 'j']).to_frame(index=False)
 new_df['orig_i'] = new_df['i'] // 2
 new_df['orig_j'] = new_df['j'] // 2
 
-#rename to be normal
 df_renamed = data.rename(columns={'i': 'orig_i', 'j': 'orig_j'})
-
-#inherit validity and value from parents
 new_df = new_df.merge(df_renamed, on=['orig_i', 'orig_j'], how='left')
-new_df['inCircle'] = new_df['inCircle'].fillna(0).astype(int)
+new_df['isValid'] = new_df['isValid'].fillna(0).astype(int)
 
-#keep format of columns
 new_df = new_df.drop(columns=['orig_i', 'orig_j'])
-new_df = new_df[['price', 'inCircle', 'i', 'j']]
+new_df = new_df[['price', 'isValid', 'i', 'j']]
 
-#average
-new_df['priceAvg'] = 0
+# Corrected price averaging using .loc and original price values
+new_df['priceAvg'] = 0.0  # Initialize as float
+for i in new_df['i'].unique():
+    for j in new_df['j'].unique():
+        total = 0.0
+        count = 0
+        for di, dj in [(0,0), (0,1), (0,-1), (1,0), (-1,0)]:
+            ni = i + di
+            nj = j + dj
+            if ni in new_df['i'].values and nj in new_df['j'].values:
+                total += new_df[(new_df['i'] == ni) & (new_df['j'] == nj)]['price'].values[0]
+                count += 1
+        if count > 0:
+            new_df.loc[(new_df['i'] == i) & (new_df['j'] == j), 'priceAvg'] = total / count
+
+# Properly handle column operations
+new_df = new_df.drop(columns=['price'])
+new_df = new_df.rename(columns={'priceAvg': 'price'})
+
+# Create validity and price matrices
+a = []
+b = []
 for i in range(n_rows):
+    a_row = []
+    b_row = []
     for j in range(n_cols):
-        counter = 0
-        for di, dj in [(0, -1), (0, 1), (-1, 0), (1, 0), (0, 0)]:
-            if ((i+di) >= 0 and (i+di) <= n_rows and (j+dj) >= 0 and (j+dj) <= n_cols):
-                new_df.iloc((i(n_cols + 1))j)['priceAvg'] += new_df.iloc(((i+di)(n_cols + 1))(j+dj))['priceAvg']
-                counter += 1
-        new_df.iloc((i(n_cols + 1))j)['priceAvg'] /= 5
-#rename again
-new_df.drop(columns=['price'])
-new_df = new_df.rename(columns = {'priceAvg' : 'price'})
+        valid = new_df[(new_df['i'] == i) & (new_df['j'] == j)]['isValid'].values[0]
+        price = new_df[(new_df['i'] == i) & (new_df['j'] == j)]['price'].values[0]
+        a_row.append(valid)
+        b_row.append(price)
+    a.append(a_row)
+    b.append(b_row)
 
-#penalizes expensive land
-#SAMPLE -- adjust functions as you like
-#A matrix is land/property value (total) in an area
-def land_value(A, X, _):
-    return sum(A[i][j] * X[i][j] for i in range(n_rows) for j in range(n_cols))
-
-#penalizes drastic height changes
-#SAMPLE - adjust functions as you like
-#A matrix is "steepness" metric of area
-def topography(A, X, _):
-    return sum(A[i][j] * X[i][j] for i in range(n_rows) for j in range(n_cols))
-
-#requires singular stadium
-def CONST_one_stadium(_, X, __):
-    return (-1 + sum(X[i][j] for i in range(n_rows) for j in range(n_cols)))**2
-
-#requires no water
-#A matrix should be 1 for invalid areas, 0 for valid areas
-def CONST_no_water(A, X, _):
-    return sum(A[i][j] * X[i][j] for i in range(n_rows) for j in range(n_cols))
-
-#requires stadium to be in radius of the city
-#SAMPLE - adjust functions as you like
-#A matrix should be 1 for invalid areas, 0 for valid areas
-def CONST_in_radius(A, X, _):
-    return sum(A[i][j] * X[i][j] for i in range(n_rows) for j in range(n_cols))
-
-#rewards larger stadiums, within range
-#SAMPLE - adjust functions as you like
-#y variable is stadium capacity ()
-def stadium_size(A, X, y):
-    return 0.0095009*y - sum(A[i][j] * X[i][j] * (0.75 + 0.0005 * y) for i in range(n_rows) for j in range(n_cols))
-
-#initialize GEKKO model (solve locally) and set the MINLP solver (APOPT) for binary vars
+# Initialize GEKKO model
 m = GEKKO(remote=False)
-m.options.SOLVER = 1 
+m.options.SOLVER = 1  # APOPT solver
 
-#is stadium at i,j & # seats (thousands)
-l = m.Array(m.Var, (n_rows, n_cols), lb=0, ub=1, integer=True)
+# Create variables only for valid locations
+valid_indices = [(i,j) for i in range(n_rows) for j in range(n_cols) if a[i][j] == 1]
+l = m.Array(m.Var, len(valid_indices), lb=0, ub=1, integer=True)
 s = m.Var(lb=50000, ub=82500, integer=True)
 
-#function weights
-M = 50000000
-num_terms = 5
-weights = [1,M,M,M, -0.005]
-
-#functions
-funcs = [land_value, CONST_one_stadium, CONST_no_water, CONST_in_radius, stadium_size]
-
-#coefficient matrices for functions
-#make sure coeffs[-1] == coeffs[0]
-#SAMPLE -- these are read in from gis data
-coeffs = [[[20,30,10,15],
-           [15,16,19,5],
-           [12,21,23,21]],
-          [[5,6,7,8],
-           [7,1,2,3],
-           [9,7,5,4]],
-          [[20,30,10,15],
-           [15,16,19,5],
-           [12,21,23,21]],
-          [[1,1,1,1],
-           [0,1,0,0],
-           [1,1,0,0]],
-          [[1,1,0,1],
-           [1,0,0,1],
-           [1,1,0,1]],
-          [[20,30,10,15],
-           [15,16,19,5],
-           [12,21,23,21]]]
-counter = 1  # start counter at 1
 
 
-#objective
-def obj_term(f, A, X, y):
-    return f(A,X,y)
+# Constraints
+m.Equation(sum(l) == 1)  # Exactly one stadium
 
-#min weighted terms
-m.Minimize(sum(weights[i]*obj_term(funcs[i],coeffs[i],l,s) for i in range(num_terms)))
 
-#steady-state optimization mode (IMODE=3)
+# Objective function with stadium capacity relationship
+m.Minimize(
+    sum(b[i][j] * l_var for (i,j), l_var in zip(valid_indices, l)) - 
+    0.025 * (s**2 + 67500**2) + 0.0025 * s * b[n_rows//2][n_cols//2]
+)
+m.Minimize(b[i][j] * sum(l_var * ((i-n_rows/2)**2 + (j-n_cols/2)**2) for (i,j), l_var in zip(valid_indices, l)))
+
 m.options.IMODE = 3
 
-#solve (display intermediate steps)
-m.solve(disp=True)
+try:
+    m.solve(disp=False)
+except Exception as e:
+    print(f"Solver failed: {e}")
 
-# Print the resulting binary 2D array and the objective value
-print("Solution for the binary 2D array:")
-for i in range(n_rows):
-    row = [int(round(l[i][j].value[0])) for j in range(n_cols)]
-    print(f"Row {i}: {row}")
-print(f"Solution for stadium seat number: {s.value[0]}")
-print("Objective value:", m.options.objfcnval)
+# Print solution
+print("\nOptimal solution:")
+selected = np.argmax([x.value[0] for x in l])
+i, j = valid_indices[selected]
+print(f"Stadium location: ({i}, {j})")
+print(f"Stadium capacity: {s.value[0]:.0f} seats")
